@@ -1,0 +1,19 @@
+env: "prod"
+
+db:
+  host: "postgres-prod.mydomain.com"
+  port: 5432
+  user: "prod_user"
+  password: "securepassword"   # в идеале вынести в ENV переменные
+  name: "mes_db"
+
+server:
+  port: 80   # если используется reverse proxy (Nginx / Traefik)
+
+jwt:
+  secret: "CHANGE_ME_TO_STRONG_SECRET_BASE64"  # обязательно заменить!
+  ttl_seconds: 900      # 15 минут
+  refresh_ttl_seconds: 2592000   # 30 дней
+
+
+эту фигню отредачить на прод

@@ -1,0 +1,557 @@
+definitions:
+  permission.Permission:
+    properties:
+      category:
+        type: string
+      code:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  permission.PermissionAssignRequest:
+    properties:
+      permission_ids:
+        items:
+          type: integer
+        type: array
+      role_id:
+        type: integer
+    required:
+    - role_id
+    type: object
+  role.CreateRequest:
+    description: Запрос для создания новой роли с опциональным списком разрешений
+    properties:
+      name:
+        example: Администратор
+        type: string
+      permission_ids:
+        example:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        items:
+          type: integer
+        type: array
+    required:
+    - name
+    type: object
+  role.ErrorResponse:
+    description: Стандартный формат ответа при ошибке
+    properties:
+      error:
+        example: Описание ошибки
+        type: string
+    type: object
+  role.Role:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/permission.Permission'
+        type: array
+    type: object
+  role.SuccessResponse:
+    description: Стандартный формат ответа при успешной операции
+    properties:
+      message:
+        example: Операция выполнена успешно
+        type: string
+    type: object
+  role.UpdateRequest:
+    description: Запрос для обновления роли
+    properties:
+      name:
+        example: Модератор
+        type: string
+      permission_ids:
+        example:
+        - 1
+        - 2
+        - 3
+        items:
+          type: integer
+        type: array
+    required:
+    - name
+    type: object
+  user.User:
+    properties:
+      createdAt:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      password:
+        type: string
+      role:
+        $ref: '#/definitions/role.Role'
+      roleID:
+        format: int64
+        type: integer
+      username:
+        type: string
+    type: object
+  user.createRequest:
+    properties:
+      full_name:
+        example: Admin User
+        type: string
+      password:
+        example: "123456"
+        type: string
+      role_id:
+        example: 1
+        type: integer
+      username:
+        example: admin
+        type: string
+    type: object
+  user.loginRequest:
+    properties:
+      password:
+        example: "123456"
+        type: string
+      username:
+        example: admin
+        type: string
+    type: object
+  user.refreshRequest:
+    properties:
+      refresh_token:
+        example: uuid-refresh-token
+        type: string
+    type: object
+  user.tokenResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+      user:
+        $ref: '#/definitions/user.User'
+    type: object
+info:
+  contact: {}
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and get access + refresh tokens
+      parameters:
+      - description: Credentials
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/user.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.tokenResponse'
+        "400":
+          description: bad request
+          schema:
+            type: string
+        "401":
+          description: invalid credentials
+          schema:
+            type: string
+      summary: Login
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh JWT using refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/user.refreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.tokenResponse'
+        "400":
+          description: bad request
+          schema:
+            type: string
+        "401":
+          description: invalid refresh token
+          schema:
+            type: string
+      summary: Refresh access token
+      tags:
+      - Auth
+  /roles:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех ролей с их разрешениями
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список ролей
+          schema:
+            items:
+              $ref: '#/definitions/role.Role'
+            type: array
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+      summary: Получить список всех ролей
+      tags:
+      - roles
+    post:
+      consumes:
+      - application/json
+      description: Создает новую роль с указанными разрешениями
+      parameters:
+      - description: Данные для создания роли
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/role.CreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Созданная роль
+          schema:
+            $ref: '#/definitions/role.Role'
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+        "409":
+          description: Роль с таким именем уже существует
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+      summary: Создать новую роль
+      tags:
+      - roles
+  /roles/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет роль по указанному ID
+      parameters:
+      - description: ID роли
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Роль успешно удалена
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+        "404":
+          description: Роль не найдена
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+      summary: Удалить роль
+      tags:
+      - roles
+    get:
+      consumes:
+      - application/json
+      description: Возвращает роль по указанному ID со списком разрешений
+      parameters:
+      - description: ID роли
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Роль с разрешениями
+          schema:
+            $ref: '#/definitions/role.Role'
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+        "404":
+          description: Роль не найдена
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+      summary: Получить роль по ID
+      tags:
+      - roles
+    put:
+      consumes:
+      - application/json
+      description: Обновляет информацию о роли и её разрешения
+      parameters:
+      - description: ID роли
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные для обновления роли
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/role.UpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновленная роль
+          schema:
+            $ref: '#/definitions/role.Role'
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+        "404":
+          description: Роль не найдена
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+        "409":
+          description: Роль с таким именем уже существует
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+      summary: Обновить роль
+      tags:
+      - roles
+  /roles/{id}/permissions:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список разрешений для указанной роли
+      parameters:
+      - description: ID роли
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список разрешений роли
+          schema:
+            items:
+              $ref: '#/definitions/permission.Permission'
+            type: array
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+        "404":
+          description: Роль не найдена
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+      summary: Получить разрешения роли
+      tags:
+      - roles
+    put:
+      consumes:
+      - application/json
+      description: Полностью заменяет список разрешений для указанной роли
+      parameters:
+      - description: ID роли
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Список ID разрешений
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/permission.PermissionAssignRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Разрешения успешно обновлены
+          schema:
+            $ref: '#/definitions/role.SuccessResponse'
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+        "404":
+          description: Роль или некоторые разрешения не найдены
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/role.ErrorResponse'
+      summary: Обновить разрешения роли
+      tags:
+      - roles
+  /users:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/user.User'
+            type: array
+        "500":
+          description: internal error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: List users
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/user.createRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: bad request
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Create user
+      tags:
+      - Users
+  /users/{id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: not found
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Delete user
+      tags:
+      - Users
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "404":
+          description: not found
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get user
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/user.createRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: bad request
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Update user
+      tags:
+      - Users
+swagger: "2.0"

@@ -1,0 +1,229 @@
+{
+  "info": {
+    "name": "MES Lite API",
+    "_postman_id": "7f4dbb2a-fbdb-45c8-965c-9b359ef40f91",
+    "description": "Postman collection with auto JWT injection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Auto inject Bearer token",
+          "let token = pm.environment.get(\"token\");",
+          "if (token) {",
+          "   pm.request.headers.add({ key: \"Authorization\", value: `Bearer ${token}` });",
+          "}"
+        ]
+      }
+    }
+  ],
+
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let json = pm.response.json();",
+                  "if (json.access_token) pm.environment.set(\"token\", json.access_token);",
+                  "if (json.refresh_token) pm.environment.set(\"refresh_token\", json.refresh_token);",
+                  "pm.test(\"Status 200\", () => pm.response.code === 200);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"username\": \"admin\", \"password\": \"admin\" }"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let json = pm.response.json();",
+                  "if (json.access_token) pm.environment.set(\"token\", json.access_token);",
+                  "if (json.refresh_token) pm.environment.set(\"refresh_token\", json.refresh_token);",
+                  "pm.test(\"Status 200\", () => pm.response.code === 200);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"refresh_token\": \"{{refresh_token}}\" }"
+            },
+            "url": "{{base_url}}/auth/refresh"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Users",
+          "request": {"method": "GET", "url": "{{base_url}}/users"}
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"username\": \"new\", \"full_name\": \"User\", \"password\": \"123456\", \"role_id\": 2 }"
+            },
+            "url": "{{base_url}}/users"
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users/{{user_id}}"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"username\": \"updated\", \"full_name\": \"Updated\", \"password\": \"newpass\", \"role_id\": 2 }"
+            },
+            "url": "{{base_url}}/users/{{user_id}}"
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/users/{{user_id}}"
+          }
+        },
+        {
+          "name": "Admin — Full Users List",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users/admin"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "Get All Roles",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/roles"
+          }
+        },
+        {
+          "name": "Create Role",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"name\": \"Администратор\", \"permission_ids\": [1, 2, 3, 4, 5] }"
+            },
+            "url": "{{base_url}}/roles"
+          }
+        },
+        {
+          "name": "Get Role by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/roles/{{role_id}}"
+          }
+        },
+        {
+          "name": "Update Role",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"name\": \"Модератор\", \"permission_ids\": [1, 2, 3] }"
+            },
+            "url": "{{base_url}}/roles/{{role_id}}"
+          }
+        },
+        {
+          "name": "Delete Role",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/roles/{{role_id}}"
+          }
+        },
+        {
+          "name": "Get Role Permissions",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/roles/{{role_id}}/permissions"
+          }
+        },
+        {
+          "name": "Update Role Permissions",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"permission_ids\": [1, 2, 3, 4] }"
+            },
+            "url": "{{base_url}}/roles/{{role_id}}/permissions"
+          }
+        }
+      ]
+    }
+  ],
+
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "user_id",
+      "value": "1"
+    },
+    {
+      "key": "role_id",
+      "value": "1"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+env: "dev"
+
+db:
+  host: "db"
+  port: 5432
+  user: "dev"
+  password: "123123"
+  name: "mes_db"
+
+server:
+  port: 8080
+
+jwt:
+  secret: "dfad8y2JrF0X8df9K+SkN5jGrTnY2lvp0mCv1yLDW3c8E2z/3E7bqg=="
+  ttl_seconds: 900

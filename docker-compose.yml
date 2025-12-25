@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:15
+    container_name: mes_postgres
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: 123123
+      POSTGRES_DB: mes_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    image: migrate/migrate:v4.17.0
+    container_name: mes_migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./pkg/migrations:/migrations
+    command:
+      [
+        "-path", "/migrations",
+        "-database",
+        "postgres://dev:123123@db:5432/mes_db?sslmode=disable",
+        "up"
+      ]
+    restart: "no"
+
+  api:
+    build: .
+    container_name: mes_api
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: dev
+      DB_PASSWORD: 123123
+      DB_NAME: mes_db
+      CONFIG_PATH: /app/config/dev.yaml
+    volumes:
+      - ./pkg/config:/app/config
+    restart: unless-stopped
+
+volumes:
+  db_data:

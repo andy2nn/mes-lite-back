@@ -10,10 +10,10 @@ import (
 )
 
 type Handler struct {
-	service *Service
+	service ServiceInterface
 }
 
-func NewHandler(service *Service) *Handler {
+func NewHandler(service ServiceInterface) *Handler {
 	return &Handler{service: service}
 }
 
@@ -32,6 +32,7 @@ func (h *Handler) Routes() chi.Router {
 	return r
 }
 
+// CreateRequest данные для создания / обновления пользователя
 type CreateRequest struct {
 	Username string `json:"username" example:"admin"`
 	Password string `json:"password" example:"123456"`
@@ -39,8 +40,10 @@ type CreateRequest struct {
 	RoleID   int64  `json:"role_id" example:"1"`
 }
 
-// @Summary List users
-// @Tags Users
+// ListUsers godoc
+// @Summary Получить список пользователей
+// @Description Возвращает список всех пользователей
+// @Tags users
 // @Security BearerAuth
 // @Produce json
 // @Success 200 {array} User
@@ -61,8 +64,10 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, users)
 }
 
-// @Summary Get user
-// @Tags Users
+// GetUser godoc
+// @Summary Получить пользователя
+// @Description Возвращает пользователя по ID
+// @Tags users
 // @Security BearerAuth
 // @Produce json
 // @Param id path int true "User ID"
@@ -82,12 +87,14 @@ func (h *Handler) getByID(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, u)
 }
 
-// @Summary Create user
-// @Tags Users
+// CreateUser godoc
+// @Summary Создать пользователя
+// @Description Создает нового пользователя
+// @Tags users
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param input body createRequest true "User data"
+// @Param request body CreateRequest true "Данные пользователя"
 // @Success 201
 // @Failure 400 {string} string "bad request"
 // @Router /users [post]
@@ -112,13 +119,15 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-// @Summary Update user
-// @Tags Users
+// UpdateUser godoc
+// @Summary Обновить пользователя
+// @Description Обновляет данные пользователя
+// @Tags users
 // @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param id path int true "User ID"
-// @Param input body createRequest true "User data"
+// @Param request body CreateRequest true "Данные пользователя"
 // @Success 200
 // @Failure 400 {string} string "bad request"
 // @Router /users/{id} [put]
@@ -146,8 +155,10 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// @Summary Delete user
-// @Tags Users
+// DeleteUser godoc
+// @Summary Удалить пользователя
+// @Description Удаляет пользователя по ID
+// @Tags users
 // @Security BearerAuth
 // @Param id path int true "User ID"
 // @Success 204

@@ -5,7 +5,6 @@
     "description": "Postman collection with auto JWT injection",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
-
   "event": [
     {
       "listen": "prerequest",
@@ -20,7 +19,6 @@
       }
     }
   ],
-
   "item": [
     {
       "name": "Auth",
@@ -77,7 +75,6 @@
         }
       ]
     },
-
     {
       "name": "Users",
       "item": [
@@ -99,10 +96,7 @@
         },
         {
           "name": "Get User by ID",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/users/{{user_id}}"
-          }
+          "request": {"method": "GET", "url": "{{base_url}}/users/{{user_id}}"}
         },
         {
           "name": "Update User",
@@ -118,30 +112,20 @@
         },
         {
           "name": "Delete User",
-          "request": {
-            "method": "DELETE",
-            "url": "{{base_url}}/users/{{user_id}}"
-          }
+          "request": {"method": "DELETE", "url": "{{base_url}}/users/{{user_id}}"}
         },
         {
           "name": "Admin — Full Users List",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/users/admin"
-          }
+          "request": {"method": "GET", "url": "{{base_url}}/users/admin"}
         }
       ]
     },
-
     {
       "name": "Roles",
       "item": [
         {
           "name": "Get All Roles",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/roles"
-          }
+          "request": {"method": "GET", "url": "{{base_url}}/roles"}
         },
         {
           "name": "Create Role",
@@ -157,10 +141,7 @@
         },
         {
           "name": "Get Role by ID",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/roles/{{role_id}}"
-          }
+          "request": {"method": "GET", "url": "{{base_url}}/roles/{{role_id}}"}
         },
         {
           "name": "Update Role",
@@ -176,54 +157,104 @@
         },
         {
           "name": "Delete Role",
-          "request": {
-            "method": "DELETE",
-            "url": "{{base_url}}/roles/{{role_id}}"
-          }
+          "request": {"method": "DELETE", "url": "{{base_url}}/roles/{{role_id}}"}
         },
         {
           "name": "Get Role Permissions",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/roles/{{role_id}}/permissions"
-          }
+          "request": {"method": "GET", "url": "{{base_url}}/roles/{{role_id}}/permissions"}
         },
         {
           "name": "Update Role Permissions",
           "request": {
             "method": "PUT",
             "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{ \"permission_ids\": [1, 2, 3, 4] }"
-            },
+            "body": {"mode": "raw", "raw": "{ \"permission_ids\": [1, 2, 3, 4] }"},
             "url": "{{base_url}}/roles/{{role_id}}/permissions"
           }
         }
       ]
+    },
+    {
+      "name": "Permissions",
+      "item": [
+        {
+          "name": "Get All Permissions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.code === 200);",
+                  "pm.test(\"Is array\", () => Array.isArray(pm.response.json()));"
+                ]
+              }
+            }
+          ],
+          "request": {"method": "GET", "url": "{{base_url}}/permissions"}
+        },
+        {
+          "name": "Create Permission",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Created\", () => pm.response.code === 201);",
+                  "let json = pm.response.json();",
+                  "if (json.id) pm.environment.set(\"permission_id\", json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{ \"name\": \"users.read\", \"description\": \"Read users\" }"},
+            "url": "{{base_url}}/permissions"
+          }
+        },
+        {
+          "name": "Get Permission by ID",
+          "event": [
+            {"listen": "test", "script": {"exec": ["pm.test(\"Status 200\", () => pm.response.code === 200);","pm.expect(pm.response.json()).to.have.property(\"id\");"]}}
+          ],
+          "request": {"method": "GET", "url": "{{base_url}}/permissions/{{permission_id}}"}
+        },
+        {
+          "name": "Get Permission by Name",
+          "event": [
+            {"listen": "test", "script": {"exec": ["pm.test(\"Status 200\", () => pm.response.code === 200);"]}}
+          ],
+          "request": {"method": "GET", "url": "{{base_url}}/permissions/name/users.read"}
+        },
+        {
+          "name": "Update Permission",
+          "event": [
+            {"listen": "test", "script": {"exec": ["pm.test(\"Status 200\", () => pm.response.code === 200);"]}}
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{ \"name\": \"users.read\", \"description\": \"Read users updated\" }"},
+            "url": "{{base_url}}/permissions/{{permission_id}}"
+          }
+        },
+        {
+          "name": "Delete Permission",
+          "event": [
+            {"listen": "test", "script": {"exec": ["pm.test(\"No Content\", () => pm.response.code === 204);"]}}
+          ],
+          "request": {"method": "DELETE", "url": "{{base_url}}/permissions/{{permission_id}}"}
+        }
+      ]
     }
   ],
-
   "variable": [
-    {
-      "key": "base_url",
-      "value": "http://localhost:8080/api/v1"
-    },
-    {
-      "key": "token",
-      "value": ""
-    },
-    {
-      "key": "refresh_token",
-      "value": ""
-    },
-    {
-      "key": "user_id",
-      "value": "1"
-    },
-    {
-      "key": "role_id",
-      "value": "1"
-    }
+    {"key": "base_url", "value": "http://localhost:8080/api/v1"},
+    {"key": "token", "value": ""},
+    {"key": "refresh_token", "value": ""},
+    {"key": "user_id", "value": "1"},
+    {"key": "role_id", "value": "1"},
+    {"key": "permission_id", "value": ""}
   ]
 }

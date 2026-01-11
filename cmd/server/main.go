@@ -16,6 +16,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"mes-lite-back/internal/db"
+	"mes-lite-back/internal/features/permission"
 	"mes-lite-back/internal/features/role"
 	"mes-lite-back/internal/features/user"
 
@@ -51,6 +52,7 @@ func main() {
 	userRepo := user.NewGormRepository(dbConn)
 	refreshRepo := user.NewRefreshTokenRepository(dbConn)
 	roleRepo := role.NewGormRepository(dbConn)
+	permissionRepo := permission.NewGormRepository(dbConn)
 
 	userService := user.NewService(userRepo)
 
@@ -62,10 +64,12 @@ func main() {
 	)
 
 	roleService := role.NewService(roleRepo)
+	permissionService := permission.NewService(permissionRepo)
 
 	userHandler := user.NewHandler(userService)
 	authHandler := user.NewAuthHandler(authService)
 	roleHandler := role.NewHandler(roleService)
+	permissionHandler := permission.NewHandler(permissionService)
 
 	r := chi.NewRouter()
 
@@ -88,6 +92,10 @@ func main() {
 
 	apiRouter.Route("/roles", func(r chi.Router) {
 		r.Mount("/", roleHandler.Routes())
+	})
+
+	apiRouter.Route("/permissions", func(r chi.Router) {
+		r.Mount("/", permissionHandler.Routes())
 	})
 
 	r.Mount("/api/v1", apiRouter)

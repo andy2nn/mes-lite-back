@@ -107,6 +107,233 @@ const docTemplate = `{
                 }
             }
         },
+        "/permissions": {
+            "get": {
+                "description": "Получить все разрешения",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "permissions"
+                ],
+                "summary": "Получить список разрешений",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/permission.PermissionResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/permission.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Создать новое разрешение",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "permissions"
+                ],
+                "summary": "Создать разрешение",
+                "parameters": [
+                    {
+                        "description": "Данные разрешения",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/permission.CreatePermissionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/permission.PermissionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/permission.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/permission.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/permissions/name/{name}": {
+            "get": {
+                "description": "Получить разрешение по имени",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "permissions"
+                ],
+                "summary": "Получить разрешение по имени",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Имя разрешения",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/permission.PermissionResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/permission.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/permissions/{id}": {
+            "get": {
+                "description": "Получить разрешение по идентификатору",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "permissions"
+                ],
+                "summary": "Получить разрешение по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID разрешения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/permission.PermissionResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/permission.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Обновить данные разрешения",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "permissions"
+                ],
+                "summary": "Обновить разрешение",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID разрешения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные разрешения",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/permission.UpdatePermissionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/permission.PermissionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/permission.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/permission.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удалить разрешение по ID",
+                "tags": [
+                    "permissions"
+                ],
+                "summary": "Удалить разрешение",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID разрешения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/permission.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/permission.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/roles": {
             "get": {
                 "description": "Возвращает список всех ролей с их разрешениями",
@@ -122,7 +349,7 @@ const docTemplate = `{
                 "summary": "Получить список всех ролей",
                 "responses": {
                     "200": {
-                        "description": "Список ролей",
+                        "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -131,7 +358,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Внутренняя ошибка сервера",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
@@ -163,25 +390,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Созданная роль",
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/role.Role"
                         }
                     },
                     "400": {
-                        "description": "Некорректный запрос",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
                     },
                     "409": {
-                        "description": "Роль с таким именем уже существует",
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Внутренняя ошибка сервера",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
@@ -213,25 +440,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Роль с разрешениями",
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/role.Role"
                         }
                     },
                     "400": {
-                        "description": "Некорректный ID",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Роль не найдена",
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Внутренняя ошибка сервера",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
@@ -270,31 +497,31 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Обновленная роль",
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/role.Role"
                         }
                     },
                     "400": {
-                        "description": "Некорректный запрос",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Роль не найдена",
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
                     },
                     "409": {
-                        "description": "Роль с таким именем уже существует",
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Внутренняя ошибка сервера",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
@@ -324,22 +551,22 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "Роль успешно удалена"
+                        "description": "No Content"
                     },
                     "400": {
-                        "description": "Некорректный ID",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Роль не найдена",
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Внутренняя ошибка сервера",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
@@ -371,7 +598,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Список разрешений роли",
+                        "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -380,19 +607,19 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Некорректный ID",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Роль не найдена",
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Внутренняя ошибка сервера",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
@@ -425,31 +652,31 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/permission.PermissionAssignRequest"
+                            "$ref": "#/definitions/role.UpdateRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Разрешения успешно обновлены",
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/role.SuccessResponse"
                         }
                     },
                     "400": {
-                        "description": "Некорректный запрос",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Роль или некоторые разрешения не найдены",
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Внутренняя ошибка сервера",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/role.ErrorResponse"
                         }
@@ -464,13 +691,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает список всех пользователей",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "users"
                 ],
-                "summary": "List users",
+                "summary": "Получить список пользователей",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -495,6 +723,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Создает нового пользователя",
                 "consumes": [
                     "application/json"
                 ],
@@ -502,17 +731,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "users"
                 ],
-                "summary": "Create user",
+                "summary": "Создать пользователя",
                 "parameters": [
                     {
-                        "description": "User data",
-                        "name": "input",
+                        "description": "Данные пользователя",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.createRequest"
+                            "$ref": "#/definitions/user.CreateRequest"
                         }
                     }
                 ],
@@ -536,13 +765,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает пользователя по ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "users"
                 ],
-                "summary": "Get user",
+                "summary": "Получить пользователя",
                 "parameters": [
                     {
                         "type": "integer",
@@ -573,6 +803,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Обновляет данные пользователя",
                 "consumes": [
                     "application/json"
                 ],
@@ -580,9 +811,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "users"
                 ],
-                "summary": "Update user",
+                "summary": "Обновить пользователя",
                 "parameters": [
                     {
                         "type": "integer",
@@ -592,12 +823,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "User data",
-                        "name": "input",
+                        "description": "Данные пользователя",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.createRequest"
+                            "$ref": "#/definitions/user.CreateRequest"
                         }
                     }
                 ],
@@ -619,10 +850,11 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Удаляет пользователя по ID",
                 "tags": [
-                    "Users"
+                    "users"
                 ],
-                "summary": "Delete user",
+                "summary": "Удалить пользователя",
                 "parameters": [
                     {
                         "type": "integer",
@@ -647,6 +879,25 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "permission.CreatePermissionRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "permission.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "permission.Permission": {
             "type": "object",
             "properties": {
@@ -670,25 +921,32 @@ const docTemplate = `{
                 }
             }
         },
-        "permission.PermissionAssignRequest": {
+        "permission.PermissionResponse": {
             "type": "object",
-            "required": [
-                "role_id"
-            ],
             "properties": {
-                "permission_ids": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                "description": {
+                    "type": "string"
                 },
-                "role_id": {
+                "id": {
                     "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "permission.UpdatePermissionRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
         "role.CreateRequest": {
-            "description": "Запрос для создания новой роли с опциональным списком разрешений",
             "type": "object",
             "required": [
                 "name"
@@ -714,7 +972,6 @@ const docTemplate = `{
             }
         },
         "role.ErrorResponse": {
-            "description": "Стандартный формат ответа при ошибке",
             "type": "object",
             "properties": {
                 "error": {
@@ -741,7 +998,6 @@ const docTemplate = `{
             }
         },
         "role.SuccessResponse": {
-            "description": "Стандартный формат ответа при успешной операции",
             "type": "object",
             "properties": {
                 "message": {
@@ -751,7 +1007,6 @@ const docTemplate = `{
             }
         },
         "role.UpdateRequest": {
-            "description": "Запрос для обновления роли",
             "type": "object",
             "required": [
                 "name"
@@ -771,6 +1026,31 @@ const docTemplate = `{
                         2,
                         3
                     ]
+                },
+                "role_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "user.CreateRequest": {
+            "type": "object",
+            "properties": {
+                "full_name": {
+                    "type": "string",
+                    "example": "Admin User"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "123456"
+                },
+                "role_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "username": {
+                    "type": "string",
+                    "example": "admin"
                 }
             }
         },
@@ -778,6 +1058,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "createdAt": {
+                    "type": "string"
+                },
+                "email": {
                     "type": "string"
                 },
                 "fullName": {
@@ -798,27 +1081,6 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
-                }
-            }
-        },
-        "user.createRequest": {
-            "type": "object",
-            "properties": {
-                "full_name": {
-                    "type": "string",
-                    "example": "Admin User"
-                },
-                "password": {
-                    "type": "string",
-                    "example": "123456"
-                },
-                "role_id": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "username": {
-                    "type": "string",
-                    "example": "admin"
                 }
             }
         },

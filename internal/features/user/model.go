@@ -12,7 +12,8 @@ type User struct {
 	FullName  string
 	RoleID    int64
 	CreatedAt time.Time
-	Role role.Role `gorm:"foreignKey:RoleID"`
+	Email     string    `json:"email"`
+	Role      role.Role `gorm:"foreignKey:RoleID"`
 }
 
 type RefreshToken struct {

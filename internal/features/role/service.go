@@ -1,5 +1,15 @@
 package role
 
+// ServiceInterface определяет методы, используемые handler’ом
+type ServiceInterface interface {
+	CreateRole(r *Role, listPerIds []int64) error
+	GetRole(id int64) (*Role, error)
+	ListRoles() ([]*Role, error)
+	UpdateRole(r *Role) error
+	DeleteRole(id int64) error
+	UpdatePermissions(roleID int64, permissionIDs []int64) error
+}
+
 type Service struct {
 	repo Repository
 }

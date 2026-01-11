@@ -9,6 +9,15 @@ import (
 
 var ErrInvalidCreds = errors.New("invalid username or password")
 
+// ServiceInterface определяет методы, используемые handler’ом
+type ServiceInterface interface {
+	CreateUser(u *User, rawPassword string) error
+	GetUser(id int64) (*User, error)
+	ListUsers() ([]*User, error)
+	UpdateUser(u *User, newPassword string) error
+	DeleteUser(id int64) error
+}
+
 type Service struct {
 	repo Repository
 }
@@ -41,7 +50,7 @@ func (s *Service) ListUsers() ([]*User, error) {
 	return s.repo.List()
 }
 
-//TODO: проверить и поправить
+// TODO: проверить и поправить
 func (s *Service) UpdateUser(u *User, newPassword string) error {
 	if newPassword != "" {
 		hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)

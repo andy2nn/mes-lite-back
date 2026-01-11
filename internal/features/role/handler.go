@@ -3,19 +3,18 @@ package role
 import (
 	"encoding/json"
 	"log/slog"
-	"mes-lite-back/internal/features/permission"
+	"mes-lite-back/pkg"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
-	service *Service
+	service ServiceInterface
 }
 
-func NewHandler(service *Service) *Handler {
+func NewHandler(service ServiceInterface) *Handler {
 	return &Handler{
 		service: service,
 	}
@@ -35,28 +34,21 @@ func (h *Handler) Routes() chi.Router {
 	return r
 }
 
-// CreateRequest запрос на создание роли
-// @Description Запрос для создания новой роли с опциональным списком разрешений
 type CreateRequest struct {
 	Name          string  `json:"name" validate:"required" example:"Администратор"`
 	PermissionIDs []int64 `json:"permission_ids,omitempty" example:"1,2,3,4,5"`
 }
 
-// UpdateRequest запрос на обновление роли
-// @Description Запрос для обновления роли
 type UpdateRequest struct {
+	RoleID        int64   `json:"role_id" example:"1"`
 	Name          string  `json:"name" validate:"required" example:"Модератор"`
 	PermissionIDs []int64 `json:"permission_ids,omitempty" example:"1,2,3"`
 }
 
-// ErrorResponse стандартный ответ с ошибкой
-// @Description Стандартный формат ответа при ошибке
 type ErrorResponse struct {
 	Error string `json:"error" example:"Описание ошибки"`
 }
 
-// SuccessResponse стандартный ответ об успехе
-// @Description Стандартный формат ответа при успешной операции
 type SuccessResponse struct {
 	Message string `json:"message" example:"Операция выполнена успешно"`
 }
@@ -67,20 +59,17 @@ type SuccessResponse struct {
 // @Tags roles
 // @Accept json
 // @Produce json
-// @Success 200 {array} Role "Список ролей"
-// @Failure 500 {object} ErrorResponse "Внутренняя ошибка сервера"
+// @Success 200 {array} Role
+// @Failure 500 {object} ErrorResponse
 // @Router /roles [get]
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	roles, err := h.service.ListRoles()
 	if err != nil {
 		slog.Error("list roles failed", slog.Any("err", err))
-		respondJSON(w, http.StatusInternalServerError, ErrorResponse{
-			Error: "Не удалось получить список ролей",
-		})
+		pkg.RespondJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "Не удалось получить список ролей"})
 		return
 	}
-
-	respondJSON(w, http.StatusOK, roles)
+	pkg.RespondJSON(w, http.StatusOK, roles)
 }
 
 // CreateRole godoc
@@ -90,56 +79,41 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param request body CreateRequest true "Данные для создания роли"
-// @Success 201 {object} Role "Созданная роль"
-// @Failure 400 {object} ErrorResponse "Некорректный запрос"
-// @Failure 409 {object} ErrorResponse "Роль с таким именем уже существует"
-// @Failure 500 {object} ErrorResponse "Внутренняя ошибка сервера"
+// @Success 201 {object} Role
+// @Failure 400 {object} ErrorResponse
+// @Failure 409 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
 // @Router /roles [post]
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 	var req CreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "Некорректный JSON",
-		})
+		pkg.RespondJSON(w, http.StatusBadRequest, ErrorResponse{Error: "Некорректный JSON"})
 		return
 	}
 
 	if req.Name == "" {
-		respondJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "Название роли обязательно",
-		})
+		pkg.RespondJSON(w, http.StatusBadRequest, ErrorResponse{Error: "Название роли обязательно"})
 		return
 	}
 
-	role := &Role{
-		Name: req.Name,
-	}
+	role := &Role{Name: req.Name}
 
-	// Используем метод Create с передачей permissionIDs
 	if err := h.service.CreateRole(role, req.PermissionIDs); err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			respondJSON(w, http.StatusConflict, ErrorResponse{
-				Error: "Роль с таким названием уже существует",
-			})
+			pkg.RespondJSON(w, http.StatusConflict, ErrorResponse{Error: "Роль с таким названием уже существует"})
 			return
 		}
-
-		respondJSON(w, http.StatusInternalServerError, ErrorResponse{
-			Error: "Ошибка при создании роли",
-		})
+		pkg.RespondJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "Ошибка при создании роли"})
 		return
 	}
 
-	// Получаем созданную роль с разрешениями
 	createdRole, err := h.service.GetRole(role.ID)
 	if err != nil {
-		respondJSON(w, http.StatusInternalServerError, ErrorResponse{
-			Error: "Ошибка при получении созданной роли",
-		})
+		pkg.RespondJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "Ошибка при получении созданной роли"})
 		return
 	}
 
-	respondJSON(w, http.StatusCreated, createdRole)
+	pkg.RespondJSON(w, http.StatusCreated, createdRole)
 }
 
 // GetRole godoc
@@ -149,36 +123,29 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path int true "ID роли"
-// @Success 200 {object} Role "Роль с разрешениями"
-// @Failure 400 {object} ErrorResponse "Некорректный ID"
-// @Failure 404 {object} ErrorResponse "Роль не найдена"
-// @Failure 500 {object} ErrorResponse "Внутренняя ошибка сервера"
+// @Success 200 {object} Role
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
 // @Router /roles/{id} [get]
 func (h *Handler) getByID(w http.ResponseWriter, r *http.Request) {
-	id := paramID(r)
+	id := pkg.ParamID(r)
 	if id == 0 {
-		respondJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "Некорректный ID роли",
-		})
+		pkg.RespondJSON(w, http.StatusBadRequest, ErrorResponse{Error: "Некорректный ID роли"})
 		return
 	}
 
 	role, err := h.service.GetRole(id)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "record not found") {
-			respondJSON(w, http.StatusNotFound, ErrorResponse{
-				Error: "Роль не найдена",
-			})
+		if strings.Contains(err.Error(), "not found") {
+			pkg.RespondJSON(w, http.StatusNotFound, ErrorResponse{Error: "Роль не найдена"})
 			return
 		}
-
-		respondJSON(w, http.StatusInternalServerError, ErrorResponse{
-			Error: "Ошибка при получении роли",
-		})
+		pkg.RespondJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "Ошибка при получении роли"})
 		return
 	}
 
-	respondJSON(w, http.StatusOK, role)
+	pkg.RespondJSON(w, http.StatusOK, role)
 }
 
 // UpdateRole godoc
@@ -189,88 +156,46 @@ func (h *Handler) getByID(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "ID роли"
 // @Param request body UpdateRequest true "Данные для обновления роли"
-// @Success 200 {object} Role "Обновленная роль"
-// @Failure 400 {object} ErrorResponse "Некорректный запрос"
-// @Failure 404 {object} ErrorResponse "Роль не найдена"
-// @Failure 409 {object} ErrorResponse "Роль с таким именем уже существует"
-// @Failure 500 {object} ErrorResponse "Внутренняя ошибка сервера"
+// @Success 200 {object} Role
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 409 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
 // @Router /roles/{id} [put]
 func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
-	id := paramID(r)
+	id := pkg.ParamID(r)
 	if id == 0 {
-		respondJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "Некорректный ID роли",
-		})
+		pkg.RespondJSON(w, http.StatusBadRequest, ErrorResponse{Error: "Некорректный ID роли"})
 		return
 	}
 
-	// Проверяем существование роли
 	existingRole, err := h.service.GetRole(id)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "record not found") {
-			respondJSON(w, http.StatusNotFound, ErrorResponse{
-				Error: "Роль не найдена",
-			})
-			return
-		}
-
-		respondJSON(w, http.StatusInternalServerError, ErrorResponse{
-			Error: "Ошибка при проверке роли",
-		})
+		pkg.RespondJSON(w, http.StatusNotFound, ErrorResponse{Error: "Роль не найдена"})
 		return
 	}
 
 	var req UpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "Некорректный JSON",
-		})
+		pkg.RespondJSON(w, http.StatusBadRequest, ErrorResponse{Error: "Некорректный JSON"})
 		return
 	}
 
-	if req.Name == "" {
-		respondJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "Название роли обязательно",
-		})
-		return
-	}
-
-	// Обновляем роль
 	existingRole.Name = req.Name
 	if err := h.service.UpdateRole(existingRole); err != nil {
-		if strings.Contains(err.Error(), "duplicate") {
-			respondJSON(w, http.StatusConflict, ErrorResponse{
-				Error: "Роль с таким названием уже существует",
-			})
-			return
-		}
-
-		respondJSON(w, http.StatusInternalServerError, ErrorResponse{
-			Error: "Ошибка при обновлении роли",
-		})
+		pkg.RespondJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "Ошибка при обновлении роли"})
 		return
 	}
 
-	// Обновляем разрешения, если они указаны
 	if req.PermissionIDs != nil {
 		if err := h.service.UpdatePermissions(id, req.PermissionIDs); err != nil {
-			respondJSON(w, http.StatusInternalServerError, ErrorResponse{
-				Error: "Ошибка при обновлении разрешений роли",
-			})
+			pkg.RespondJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "Ошибка при обновлении разрешений"})
 			return
 		}
 	}
 
-	// Получаем обновленную роль
-	updatedRole, err := h.service.GetRole(id)
-	if err != nil {
-		respondJSON(w, http.StatusInternalServerError, ErrorResponse{
-			Error: "Ошибка при получении обновленной роли",
-		})
-		return
-	}
-
-	respondJSON(w, http.StatusOK, updatedRole)
+	updatedRole, _ := h.service.GetRole(id)
+	pkg.RespondJSON(w, http.StatusOK, updatedRole)
 }
 
 // DeleteRole godoc
@@ -280,40 +205,20 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path int true "ID роли"
-// @Success 204 "Роль успешно удалена"
-// @Failure 400 {object} ErrorResponse "Некорректный ID"
-// @Failure 404 {object} ErrorResponse "Роль не найдена"
-// @Failure 500 {object} ErrorResponse "Внутренняя ошибка сервера"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
 // @Router /roles/{id} [delete]
 func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
-	id := paramID(r)
+	id := pkg.ParamID(r)
 	if id == 0 {
-		respondJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "Некорректный ID роли",
-		})
+		pkg.RespondJSON(w, http.StatusBadRequest, ErrorResponse{Error: "Некорректный ID роли"})
 		return
 	}
 
-	// Сначала получаем роль, чтобы передать в Delete
-	role, err := h.service.GetRole(id)
-	if err != nil {
-		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "record not found") {
-			respondJSON(w, http.StatusNotFound, ErrorResponse{
-				Error: "Роль не найдена",
-			})
-			return
-		}
-
-		respondJSON(w, http.StatusInternalServerError, ErrorResponse{
-			Error: "Ошибка при получении роли для удаления",
-		})
-		return
-	}
-
-	if err := h.service.DeleteRole(role.ID); err != nil {
-		respondJSON(w, http.StatusInternalServerError, ErrorResponse{
-			Error: "Ошибка при удалении роли",
-		})
+	if err := h.service.DeleteRole(id); err != nil {
+		pkg.RespondJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "Ошибка при удалении роли"})
 		return
 	}
 
@@ -327,36 +232,19 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path int true "ID роли"
-// @Success 200 {array} permission.Permission "Список разрешений роли"
-// @Failure 400 {object} ErrorResponse "Некорректный ID"
-// @Failure 404 {object} ErrorResponse "Роль не найдена"
-// @Failure 500 {object} ErrorResponse "Внутренняя ошибка сервера"
+// @Success 200 {array} permission.Permission
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
 // @Router /roles/{id}/permissions [get]
 func (h *Handler) getRolePermissions(w http.ResponseWriter, r *http.Request) {
-	id := paramID(r)
-	if id == 0 {
-		respondJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "Некорректный ID роли",
-		})
-		return
-	}
-
+	id := pkg.ParamID(r)
 	role, err := h.service.GetRole(id)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "record not found") {
-			respondJSON(w, http.StatusNotFound, ErrorResponse{
-				Error: "Роль не найдена",
-			})
-			return
-		}
-
-		respondJSON(w, http.StatusInternalServerError, ErrorResponse{
-			Error: "Ошибка при получении разрешений роли",
-		})
+		pkg.RespondJSON(w, http.StatusNotFound, ErrorResponse{Error: "Роль не найдена"})
 		return
 	}
-
-	respondJSON(w, http.StatusOK, role.Permissions)
+	pkg.RespondJSON(w, http.StatusOK, role.Permissions)
 }
 
 // UpdateRolePermissions godoc
@@ -366,59 +254,25 @@ func (h *Handler) getRolePermissions(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path int true "ID роли"
-// @Param request body permission.PermissionAssignRequest true "Список ID разрешений"
-// @Success 200 {object} SuccessResponse "Разрешения успешно обновлены"
-// @Failure 400 {object} ErrorResponse "Некорректный запрос"
-// @Failure 404 {object} ErrorResponse "Роль или некоторые разрешения не найдены"
-// @Failure 500 {object} ErrorResponse "Внутренняя ошибка сервера"
+// @Param request body UpdateRequest true "Список ID разрешений"
+// @Success 200 {object} SuccessResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
 // @Router /roles/{id}/permissions [put]
 func (h *Handler) updateRolePermissions(w http.ResponseWriter, r *http.Request) {
-	id := paramID(r)
-	if id == 0 {
-		respondJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "Некорректный ID роли",
-		})
-		return
-	}
+	id := pkg.ParamID(r)
 
-	var req permission.PermissionAssignRequest
+	var req UpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondJSON(w, http.StatusBadRequest, ErrorResponse{
-			Error: "Некорректный JSON",
-		})
+		pkg.RespondJSON(w, http.StatusBadRequest, ErrorResponse{Error: "Некорректный JSON"})
 		return
 	}
 
-	req.RoleID = id
-
-	if err := h.service.UpdatePermissions(req.RoleID, req.PermissionIDs); err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			respondJSON(w, http.StatusNotFound, ErrorResponse{
-				Error: err.Error(),
-			})
-			return
-		}
-
-		respondJSON(w, http.StatusInternalServerError, ErrorResponse{
-			Error: "Ошибка при обновлении разрешений",
-		})
+	if err := h.service.UpdatePermissions(id, req.PermissionIDs); err != nil {
+		pkg.RespondJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "Ошибка при обновлении разрешений"})
 		return
 	}
 
-	respondJSON(w, http.StatusOK, SuccessResponse{
-		Message: "Разрешения успешно обновлены",
-	})
-}
-
-// TODO: Вынести из хендлеров
-func respondJSON(w http.ResponseWriter, code int, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(data)
-}
-
-func paramID(r *http.Request) int64 {
-	idStr := chi.URLParam(r, "id")
-	id, _ := strconv.ParseInt(idStr, 10, 64)
-	return id
+	pkg.RespondJSON(w, http.StatusOK, SuccessResponse{Message: "Разрешения успешно обновлены"})
 }

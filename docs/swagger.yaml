@@ -1,4 +1,16 @@
 definitions:
+  permission.CreatePermissionRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  permission.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
   permission.Permission:
     properties:
       category:
@@ -14,19 +26,23 @@ definitions:
       name:
         type: string
     type: object
-  permission.PermissionAssignRequest:
+  permission.PermissionResponse:
     properties:
-      permission_ids:
-        items:
-          type: integer
-        type: array
-      role_id:
+      description:
+        type: string
+      id:
         type: integer
-    required:
-    - role_id
+      name:
+        type: string
+    type: object
+  permission.UpdatePermissionRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
     type: object
   role.CreateRequest:
-    description: Запрос для создания новой роли с опциональным списком разрешений
     properties:
       name:
         example: Администратор
@@ -45,7 +61,6 @@ definitions:
     - name
     type: object
   role.ErrorResponse:
-    description: Стандартный формат ответа при ошибке
     properties:
       error:
         example: Описание ошибки
@@ -63,14 +78,12 @@ definitions:
         type: array
     type: object
   role.SuccessResponse:
-    description: Стандартный формат ответа при успешной операции
     properties:
       message:
         example: Операция выполнена успешно
         type: string
     type: object
   role.UpdateRequest:
-    description: Запрос для обновления роли
     properties:
       name:
         example: Модератор
@@ -83,12 +96,32 @@ definitions:
         items:
           type: integer
         type: array
+      role_id:
+        example: 1
+        type: integer
     required:
     - name
+    type: object
+  user.CreateRequest:
+    properties:
+      full_name:
+        example: Admin User
+        type: string
+      password:
+        example: "123456"
+        type: string
+      role_id:
+        example: 1
+        type: integer
+      username:
+        example: admin
+        type: string
     type: object
   user.User:
     properties:
       createdAt:
+        type: string
+      email:
         type: string
       fullName:
         type: string
@@ -102,21 +135,6 @@ definitions:
         format: int64
         type: integer
       username:
-        type: string
-    type: object
-  user.createRequest:
-    properties:
-      full_name:
-        example: Admin User
-        type: string
-      password:
-        example: "123456"
-        type: string
-      role_id:
-        example: 1
-        type: integer
-      username:
-        example: admin
         type: string
     type: object
   user.loginRequest:
@@ -206,6 +224,156 @@ paths:
       summary: Refresh access token
       tags:
       - Auth
+  /permissions:
+    get:
+      description: Получить все разрешения
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/permission.PermissionResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/permission.ErrorResponse'
+      summary: Получить список разрешений
+      tags:
+      - permissions
+    post:
+      consumes:
+      - application/json
+      description: Создать новое разрешение
+      parameters:
+      - description: Данные разрешения
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/permission.CreatePermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/permission.PermissionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/permission.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/permission.ErrorResponse'
+      summary: Создать разрешение
+      tags:
+      - permissions
+  /permissions/{id}:
+    delete:
+      description: Удалить разрешение по ID
+      parameters:
+      - description: ID разрешения
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/permission.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/permission.ErrorResponse'
+      summary: Удалить разрешение
+      tags:
+      - permissions
+    get:
+      description: Получить разрешение по идентификатору
+      parameters:
+      - description: ID разрешения
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/permission.PermissionResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/permission.ErrorResponse'
+      summary: Получить разрешение по ID
+      tags:
+      - permissions
+    put:
+      consumes:
+      - application/json
+      description: Обновить данные разрешения
+      parameters:
+      - description: ID разрешения
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные разрешения
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/permission.UpdatePermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/permission.PermissionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/permission.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/permission.ErrorResponse'
+      summary: Обновить разрешение
+      tags:
+      - permissions
+  /permissions/name/{name}:
+    get:
+      description: Получить разрешение по имени
+      parameters:
+      - description: Имя разрешения
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/permission.PermissionResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/permission.ErrorResponse'
+      summary: Получить разрешение по имени
+      tags:
+      - permissions
   /roles:
     get:
       consumes:
@@ -215,13 +383,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: Список ролей
+          description: OK
           schema:
             items:
               $ref: '#/definitions/role.Role'
             type: array
         "500":
-          description: Внутренняя ошибка сервера
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/role.ErrorResponse'
       summary: Получить список всех ролей
@@ -242,19 +410,19 @@ paths:
       - application/json
       responses:
         "201":
-          description: Созданная роль
+          description: Created
           schema:
             $ref: '#/definitions/role.Role'
         "400":
-          description: Некорректный запрос
+          description: Bad Request
           schema:
             $ref: '#/definitions/role.ErrorResponse'
         "409":
-          description: Роль с таким именем уже существует
+          description: Conflict
           schema:
             $ref: '#/definitions/role.ErrorResponse'
         "500":
-          description: Внутренняя ошибка сервера
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/role.ErrorResponse'
       summary: Создать новую роль
@@ -275,17 +443,17 @@ paths:
       - application/json
       responses:
         "204":
-          description: Роль успешно удалена
+          description: No Content
         "400":
-          description: Некорректный ID
+          description: Bad Request
           schema:
             $ref: '#/definitions/role.ErrorResponse'
         "404":
-          description: Роль не найдена
+          description: Not Found
           schema:
             $ref: '#/definitions/role.ErrorResponse'
         "500":
-          description: Внутренняя ошибка сервера
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/role.ErrorResponse'
       summary: Удалить роль
@@ -305,19 +473,19 @@ paths:
       - application/json
       responses:
         "200":
-          description: Роль с разрешениями
+          description: OK
           schema:
             $ref: '#/definitions/role.Role'
         "400":
-          description: Некорректный ID
+          description: Bad Request
           schema:
             $ref: '#/definitions/role.ErrorResponse'
         "404":
-          description: Роль не найдена
+          description: Not Found
           schema:
             $ref: '#/definitions/role.ErrorResponse'
         "500":
-          description: Внутренняя ошибка сервера
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/role.ErrorResponse'
       summary: Получить роль по ID
@@ -343,23 +511,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: Обновленная роль
+          description: OK
           schema:
             $ref: '#/definitions/role.Role'
         "400":
-          description: Некорректный запрос
+          description: Bad Request
           schema:
             $ref: '#/definitions/role.ErrorResponse'
         "404":
-          description: Роль не найдена
+          description: Not Found
           schema:
             $ref: '#/definitions/role.ErrorResponse'
         "409":
-          description: Роль с таким именем уже существует
+          description: Conflict
           schema:
             $ref: '#/definitions/role.ErrorResponse'
         "500":
-          description: Внутренняя ошибка сервера
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/role.ErrorResponse'
       summary: Обновить роль
@@ -380,21 +548,21 @@ paths:
       - application/json
       responses:
         "200":
-          description: Список разрешений роли
+          description: OK
           schema:
             items:
               $ref: '#/definitions/permission.Permission'
             type: array
         "400":
-          description: Некорректный ID
+          description: Bad Request
           schema:
             $ref: '#/definitions/role.ErrorResponse'
         "404":
-          description: Роль не найдена
+          description: Not Found
           schema:
             $ref: '#/definitions/role.ErrorResponse'
         "500":
-          description: Внутренняя ошибка сервера
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/role.ErrorResponse'
       summary: Получить разрешения роли
@@ -415,24 +583,24 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/permission.PermissionAssignRequest'
+          $ref: '#/definitions/role.UpdateRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Разрешения успешно обновлены
+          description: OK
           schema:
             $ref: '#/definitions/role.SuccessResponse'
         "400":
-          description: Некорректный запрос
+          description: Bad Request
           schema:
             $ref: '#/definitions/role.ErrorResponse'
         "404":
-          description: Роль или некоторые разрешения не найдены
+          description: Not Found
           schema:
             $ref: '#/definitions/role.ErrorResponse'
         "500":
-          description: Внутренняя ошибка сервера
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/role.ErrorResponse'
       summary: Обновить разрешения роли
@@ -440,6 +608,7 @@ paths:
       - roles
   /users:
     get:
+      description: Возвращает список всех пользователей
       produces:
       - application/json
       responses:
@@ -455,19 +624,20 @@ paths:
             type: string
       security:
       - BearerAuth: []
-      summary: List users
+      summary: Получить список пользователей
       tags:
-      - Users
+      - users
     post:
       consumes:
       - application/json
+      description: Создает нового пользователя
       parameters:
-      - description: User data
+      - description: Данные пользователя
         in: body
-        name: input
+        name: request
         required: true
         schema:
-          $ref: '#/definitions/user.createRequest'
+          $ref: '#/definitions/user.CreateRequest'
       produces:
       - application/json
       responses:
@@ -479,11 +649,12 @@ paths:
             type: string
       security:
       - BearerAuth: []
-      summary: Create user
+      summary: Создать пользователя
       tags:
-      - Users
+      - users
   /users/{id}:
     delete:
+      description: Удаляет пользователя по ID
       parameters:
       - description: User ID
         in: path
@@ -499,10 +670,11 @@ paths:
             type: string
       security:
       - BearerAuth: []
-      summary: Delete user
+      summary: Удалить пользователя
       tags:
-      - Users
+      - users
     get:
+      description: Возвращает пользователя по ID
       parameters:
       - description: User ID
         in: path
@@ -522,24 +694,25 @@ paths:
             type: string
       security:
       - BearerAuth: []
-      summary: Get user
+      summary: Получить пользователя
       tags:
-      - Users
+      - users
     put:
       consumes:
       - application/json
+      description: Обновляет данные пользователя
       parameters:
       - description: User ID
         in: path
         name: id
         required: true
         type: integer
-      - description: User data
+      - description: Данные пользователя
         in: body
-        name: input
+        name: request
         required: true
         schema:
-          $ref: '#/definitions/user.createRequest'
+          $ref: '#/definitions/user.CreateRequest'
       produces:
       - application/json
       responses:
@@ -551,7 +724,7 @@ paths:
             type: string
       security:
       - BearerAuth: []
-      summary: Update user
+      summary: Обновить пользователя
       tags:
-      - Users
+      - users
 swagger: "2.0"

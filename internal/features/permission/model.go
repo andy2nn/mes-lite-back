@@ -28,20 +28,3 @@ func (RolePermission) TableName() string {
 	return "role_permissions"
 }
 
-// UserPermissionCheck - структура для проверки прав пользователя
-type UserPermissionCheck struct {
-	UserID         int64  `json:"user_id"`
-	PermissionCode string `json:"permission_code"`
-}
-
-// PermissionAssignRequest - запрос на назначение разрешений
-type PermissionAssignRequest struct {
-	RoleID        int64   `json:"role_id" validate:"required"`
-	PermissionIDs []int64 `json:"permission_ids"`
-}
-
-// PermissionWithAssignment - разрешение с информацией о назначении роли
-type PermissionWithAssignment struct {
-	Permission
-	Assigned bool `json:"assigned"`
-}
